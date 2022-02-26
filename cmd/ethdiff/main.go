@@ -8,15 +8,15 @@ import (
 	"os"
 	"time"
 
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/mysteriumnetwork/ethdiff/diff"
 )
 
 var version = "undefined"
 
 var (
-	reqTimeout      = flag.Duration("req-timeout", 5*time.Second, "timeout for single request")
-	totalTimeout    = flag.Duration("total-timeout", 20*time.Second, "whole operation timeout")
-	showVersion     = flag.Bool("version", false, "show program version and exit")
+	totalTimeout = flag.Duration("total-timeout", 1*time.Minute, "whole operation timeout")
+	showVersion  = flag.Bool("version", false, "show program version and exit")
 )
 
 func run() int {
@@ -39,9 +39,22 @@ func run() int {
 	ctx, cl := context.WithTimeout(context.Background(), *totalTimeout)
 	defer cl()
 
-	lastCommonBlock, err := diff.LastCommonBlock(ctx, *reqTimeout, flag.Arg(0), flag.Arg(1))
+	left, right := flag.Arg(0), flag.Arg(1)
+
+	leftClientFuture, rightClientFuture := asyncClientConnect(ctx, left), asyncClientConnect(ctx, right)
+	leftClientResult, rightClientResult := <-leftClientFuture, <-rightClientFuture
+	if leftClientResult.Err != nil {
+		log.Fatalf("asyncClientConnect(%q) error: %v", left, leftClientResult.Err)
+	}
+	if rightClientResult.Err != nil {
+		log.Fatalf("asyncClientConnect(%q) error: %v", right, rightClientResult.Err)
+	}
+
+	leftClient, rightClient := leftClientResult.Client, rightClientResult.Client
+
+	lastCommonBlock, err := diff.LastCommonBlock(ctx, leftClient, rightClient)
 	if err != nil {
-		log.Fatalf("LastCommonBlock(%v, %v, %v) error: %v", *reqTimeout, flag.Arg(0), flag.Arg(1), err)
+		log.Fatalf("LastCommonBlock(%v, %v, %v) error: %v", flag.Arg(0), flag.Arg(1), err)
 	}
 
 	fmt.Printf("0x%x\n", lastCommonBlock)
@@ -52,4 +65,24 @@ func run() int {
 func main() {
 	log.Default().SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
 	os.Exit(run())
+}
+
+type clientConnectResponse struct {
+	Client *ethclient.Client
+	Err    error
+}
+
+func asyncClientConnect(ctx context.Context, address string) <-chan *clientConnectResponse {
+	r := make(chan *clientConnectResponse, 1)
+
+	go func() {
+		defer close(r)
+		client, err := ethclient.DialContext(ctx, address)
+		r <- &clientConnectResponse{
+			Client: client,
+			Err:    err,
+		}
+	}()
+
+	return r
 }
