@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -17,6 +18,35 @@ var (
 type Client interface {
 	BlockByNumber(ctx context.Context, number *big.Int) (*types.Block, error)
 	BlockNumber(ctx context.Context) (uint64, error)
+}
+
+func getBlocks(ctx context.Context, left, right Client, blockNumber uint64) (*types.Block, *types.Block, error) {
+	var (
+		wg sync.WaitGroup
+		leftBlock, rightBlock *types.Block
+		leftErr, rightErr error
+	)
+	bigBlockNumber := big.NewInt(int64(blockNumber))
+
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		leftBlock, leftErr = left.BlockByNumber(ctx, bigBlockNumber)
+	}()
+	go func() {
+		defer wg.Done()
+		rightBlock, rightErr = right.BlockByNumber(ctx, bigBlockNumber)
+	}()
+	wg.Wait()
+
+	if leftErr != nil {
+		return nil, nil, fmt.Errorf("left.BlockNumber: error: %w", leftErr)
+	}
+	if rightErr != nil {
+		return nil, nil, fmt.Errorf("right.BlockNumber: error: %w", rightErr)
+	}
+
+	return leftBlock, rightBlock, nil
 }
 
 func LastCommonBlock(ctx context.Context, left, right Client) (uint64, error) {
@@ -32,15 +62,10 @@ func LastCommonBlock(ctx context.Context, left, right Client) (uint64, error) {
 	log.Printf("highestCommonBlock = 0x%x (%d)", highestCommonBlock, highestCommonBlock)
 
 	res, err := search(highestCommonBlock+1, func(blockNumber uint64) (bool, error) {
-		bigBlockNumber := big.NewInt(int64(blockNumber))
 
-		leftBlock, err := left.BlockByNumber(ctx, bigBlockNumber)
+		leftBlock, rightBlock, err := getBlocks(ctx, left, right, blockNumber)
 		if err != nil {
-			return false, fmt.Errorf("left.BlockByNumber: error: %w", err)
-		}
-		rightBlock, err := right.BlockByNumber(ctx, bigBlockNumber)
-		if err != nil {
-			return false, fmt.Errorf("right.BlockByNumber: error: %w", err)
+			return false, err
 		}
 
 		result := leftBlock.Hash() != rightBlock.Hash()
