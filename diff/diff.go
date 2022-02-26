@@ -20,6 +20,34 @@ type Client interface {
 	BlockNumber(ctx context.Context) (uint64, error)
 }
 
+func getNumbers(ctx context.Context, left, right Client) (uint64, uint64, error) {
+	var (
+		wg sync.WaitGroup
+		leftNumber, rightNumber uint64
+		leftErr, rightErr error
+	)
+
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		leftNumber, leftErr = left.BlockNumber(ctx)
+	}()
+	go func() {
+		defer wg.Done()
+		rightNumber, rightErr = right.BlockNumber(ctx)
+	}()
+	wg.Wait()
+
+	if leftErr != nil {
+		return 0, 0, fmt.Errorf("left.BlockNumber: error: %w", leftErr)
+	}
+	if rightErr != nil {
+		return 0, 0, fmt.Errorf("right.BlockNumber: error: %w", rightErr)
+	}
+
+	return leftNumber, rightNumber, nil
+}
+
 func getBlocks(ctx context.Context, left, right Client, blockNumber uint64) (*types.Block, *types.Block, error) {
 	var (
 		wg                    sync.WaitGroup
@@ -40,23 +68,19 @@ func getBlocks(ctx context.Context, left, right Client, blockNumber uint64) (*ty
 	wg.Wait()
 
 	if leftErr != nil {
-		return nil, nil, fmt.Errorf("left.BlockNumber: error: %w", leftErr)
+		return nil, nil, fmt.Errorf("left.BlockByNumber: error: %w", leftErr)
 	}
 	if rightErr != nil {
-		return nil, nil, fmt.Errorf("right.BlockNumber: error: %w", rightErr)
+		return nil, nil, fmt.Errorf("right.BlockByNumber: error: %w", rightErr)
 	}
 
 	return leftBlock, rightBlock, nil
 }
 
 func LastCommonBlock(ctx context.Context, left, right Client, offset uint64) (uint64, error) {
-	leftLatestBlock, err := left.BlockNumber(ctx)
+	leftLatestBlock, rightLatestBlock, err := getNumbers(ctx, left, right)
 	if err != nil {
-		return 0, fmt.Errorf("left.BlockNumber: error: %w", err)
-	}
-	rightLatestBlock, err := right.BlockNumber(ctx)
-	if err != nil {
-		return 0, fmt.Errorf("right.BlockNumber: error: %w", err)
+		return 0, err
 	}
 	highestCommonBlock := max(leftLatestBlock, rightLatestBlock)
 	log.Printf("highestCommonBlock = 0x%x (%d)", highestCommonBlock, highestCommonBlock)
