@@ -31,7 +31,7 @@ func LastCommonBlock(ctx context.Context, left, right Client) (uint64, error) {
 	highestCommonBlock := max(leftLatestBlock, rightLatestBlock)
 	log.Printf("highestCommonBlock = 0x%x (%d)", highestCommonBlock, highestCommonBlock)
 
-	res, err := search(highestCommonBlock, func(blockNumber uint64) (bool, error) {
+	res, err := search(highestCommonBlock+1, func(blockNumber uint64) (bool, error) {
 		bigBlockNumber := big.NewInt(int64(blockNumber))
 
 		leftBlock, err := left.BlockByNumber(ctx, bigBlockNumber)
