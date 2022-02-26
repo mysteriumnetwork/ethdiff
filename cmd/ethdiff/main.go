@@ -54,7 +54,7 @@ func run() int {
 
 	lastCommonBlock, err := diff.LastCommonBlock(ctx, leftClient, rightClient)
 	if err != nil {
-		log.Fatalf("LastCommonBlock(%v, %v, %v) error: %v", flag.Arg(0), flag.Arg(1), err)
+		log.Fatalf("LastCommonBlock(%v, %v) error: %v", flag.Arg(0), flag.Arg(1), err)
 	}
 
 	fmt.Printf("0x%x\n", lastCommonBlock)
