@@ -8,7 +8,7 @@ Finds last common block between two Ethereum-compatible blockchains. This block 
 #### Find latest common block between Ethereum and Ethereum Classic.
 
 ```
-[21:54:28] dt1:~> ~/go/bin/ethdiff  https://cloudflare-eth.com https://www.ethercluster.com/etc
+$ ethdiff  https://cloudflare-eth.com https://www.ethercluster.com/etc
 2022/02/26 21:54:29.932755 diff.go:62: highestCommonBlock = 0xdf0d69 (14617961)
 2022/02/26 21:54:29.932955 diff.go:64: highestCommonBlock (safe value) = 0xdf0ca1 (14617761)
 2022/02/26 21:54:30.392783 diff.go:77: searchFunc(0x6f8651) = true
@@ -41,7 +41,7 @@ Finds last common block between two Ethereum-compatible blockchains. This block 
 #### Check if Polygon node is in line with official RPC endpoint
 
 ```
-[21:57:17] dt1:~> ~/go/bin/ethdiff https://polygon-rpc.com http://matic-full-node-3.mysterium.network:8545/
+$ ethdiff https://polygon-rpc.com http://matic-full-node-3.mysterium.network:8545/
 2022/02/26 21:57:42.740567 diff.go:62: highestCommonBlock = 0x183072f (25364271)
 2022/02/26 21:57:42.740611 diff.go:64: highestCommonBlock (safe value) = 0x1830667 (25364071)
 2022/02/26 21:57:42.837655 diff.go:77: searchFunc(0xc18334) = false
