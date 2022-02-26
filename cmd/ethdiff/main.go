@@ -16,7 +16,8 @@ var version = "undefined"
 
 var (
 	totalTimeout = flag.Duration("total-timeout", 1*time.Minute, "whole operation timeout")
-	offset       = flag.Uint64("offset", 10, "head backward offset for safe block retrieval")
+	offset       = flag.Uint64("offset", 200, "head backward offset for safe block retrieval")
+	retries      = flag.Uint("retries", 3, "number of retries for RPC calls")
 	showVersion  = flag.Bool("version", false, "show program version and exit")
 )
 
@@ -51,7 +52,8 @@ func run() int {
 		log.Fatalf("asyncClientConnect(%q) error: %v", right, rightClientResult.Err)
 	}
 
-	leftClient, rightClient := leftClientResult.Client, rightClientResult.Client
+	leftClient, rightClient := diff.NewRetryingClient(leftClientResult.Client, *retries),
+		diff.NewRetryingClient(rightClientResult.Client, *retries)
 
 	lastCommonBlock, err := diff.LastCommonBlock(ctx, leftClient, rightClient, *offset)
 	if err != nil {

@@ -22,9 +22,9 @@ type Client interface {
 
 func getBlocks(ctx context.Context, left, right Client, blockNumber uint64) (*types.Block, *types.Block, error) {
 	var (
-		wg sync.WaitGroup
+		wg                    sync.WaitGroup
 		leftBlock, rightBlock *types.Block
-		leftErr, rightErr error
+		leftErr, rightErr     error
 	)
 	bigBlockNumber := big.NewInt(int64(blockNumber))
 
