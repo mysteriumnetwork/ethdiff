@@ -49,7 +49,7 @@ func getBlocks(ctx context.Context, left, right Client, blockNumber uint64) (*ty
 	return leftBlock, rightBlock, nil
 }
 
-func LastCommonBlock(ctx context.Context, left, right Client) (uint64, error) {
+func LastCommonBlock(ctx context.Context, left, right Client, offset uint64) (uint64, error) {
 	leftLatestBlock, err := left.BlockNumber(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("left.BlockNumber: error: %w", err)
@@ -60,6 +60,8 @@ func LastCommonBlock(ctx context.Context, left, right Client) (uint64, error) {
 	}
 	highestCommonBlock := max(leftLatestBlock, rightLatestBlock)
 	log.Printf("highestCommonBlock = 0x%x (%d)", highestCommonBlock, highestCommonBlock)
+	highestCommonBlock -= offset
+	log.Printf("highestCommonBlock (safe value) = 0x%x (%d)", highestCommonBlock, highestCommonBlock)
 
 	res, err := search(highestCommonBlock+1, func(blockNumber uint64) (bool, error) {
 

@@ -16,6 +16,7 @@ var version = "undefined"
 
 var (
 	totalTimeout = flag.Duration("total-timeout", 1*time.Minute, "whole operation timeout")
+	offset       = flag.Uint64("offset", 10, "head backward offset for safe block retrieval")
 	showVersion  = flag.Bool("version", false, "show program version and exit")
 )
 
@@ -52,7 +53,7 @@ func run() int {
 
 	leftClient, rightClient := leftClientResult.Client, rightClientResult.Client
 
-	lastCommonBlock, err := diff.LastCommonBlock(ctx, leftClient, rightClient)
+	lastCommonBlock, err := diff.LastCommonBlock(ctx, leftClient, rightClient, *offset)
 	if err != nil {
 		log.Fatalf("LastCommonBlock(%v, %v) error: %v", flag.Arg(0), flag.Arg(1), err)
 	}
