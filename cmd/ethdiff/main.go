@@ -55,12 +55,15 @@ func run() int {
 	leftClient, rightClient := diff.NewRetryingClient(leftClientResult.Client, *retries),
 		diff.NewRetryingClient(rightClientResult.Client, *retries)
 
-	lastCommonBlock, err := diff.LastCommonBlock(ctx, leftClient, rightClient, *offset)
+	lastCommonBlock, observedHeight, err := diff.LastCommonBlock(ctx, leftClient, rightClient, *offset)
 	if err != nil {
 		log.Fatalf("LastCommonBlock(%v, %v) error: %v", flag.Arg(0), flag.Arg(1), err)
 	}
 
 	fmt.Printf("0x%x\n", lastCommonBlock)
+	if (lastCommonBlock != observedHeight) {
+		return 3
+	}
 
 	return 0
 }
