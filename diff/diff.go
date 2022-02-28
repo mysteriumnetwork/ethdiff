@@ -16,7 +16,7 @@ var (
 )
 
 type Client interface {
-	BlockByNumber(ctx context.Context, number *big.Int) (*types.Block, error)
+	HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error)
 	BlockNumber(ctx context.Context) (uint64, error)
 }
 
@@ -48,10 +48,10 @@ func getNumbers(ctx context.Context, left, right Client) (uint64, uint64, error)
 	return leftNumber, rightNumber, nil
 }
 
-func getBlocks(ctx context.Context, left, right Client, blockNumber uint64) (*types.Block, *types.Block, error) {
+func getBlocks(ctx context.Context, left, right Client, blockNumber uint64) (*types.Header, *types.Header, error) {
 	var (
 		wg                    sync.WaitGroup
-		leftBlock, rightBlock *types.Block
+		leftBlock, rightBlock *types.Header
 		leftErr, rightErr     error
 	)
 	bigBlockNumber := big.NewInt(int64(blockNumber))
@@ -59,19 +59,19 @@ func getBlocks(ctx context.Context, left, right Client, blockNumber uint64) (*ty
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		leftBlock, leftErr = left.BlockByNumber(ctx, bigBlockNumber)
+		leftBlock, leftErr = left.HeaderByNumber(ctx, bigBlockNumber)
 	}()
 	go func() {
 		defer wg.Done()
-		rightBlock, rightErr = right.BlockByNumber(ctx, bigBlockNumber)
+		rightBlock, rightErr = right.HeaderByNumber(ctx, bigBlockNumber)
 	}()
 	wg.Wait()
 
 	if leftErr != nil {
-		return nil, nil, fmt.Errorf("left.BlockByNumber: error: %w", leftErr)
+		return nil, nil, fmt.Errorf("left.HeaderByNumber: error: %w", leftErr)
 	}
 	if rightErr != nil {
-		return nil, nil, fmt.Errorf("right.BlockByNumber: error: %w", rightErr)
+		return nil, nil, fmt.Errorf("right.HeaderByNumber: error: %w", rightErr)
 	}
 
 	return leftBlock, rightBlock, nil
