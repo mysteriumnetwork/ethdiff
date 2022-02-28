@@ -24,9 +24,9 @@ func NewRetryingClient(client Client, retries uint) *RetryingClient {
 	}
 }
 
-func (c *RetryingClient) BlockByNumber(ctx context.Context, number *big.Int) (block *types.Block, err error) {
+func (c *RetryingClient) HeaderByNumber(ctx context.Context, number *big.Int) (block *types.Header, err error) {
 	for i := uint(0); i < c.retries; i++ {
-		block, err = c.client.BlockByNumber(ctx, number)
+		block, err = c.client.HeaderByNumber(ctx, number)
 		if err == nil {
 			return
 		}
