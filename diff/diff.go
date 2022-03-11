@@ -22,9 +22,9 @@ type Client interface {
 
 func getNumbers(ctx context.Context, left, right Client) (uint64, uint64, error) {
 	var (
-		wg sync.WaitGroup
+		wg                      sync.WaitGroup
 		leftNumber, rightNumber uint64
-		leftErr, rightErr error
+		leftErr, rightErr       error
 	)
 
 	wg.Add(2)
@@ -82,7 +82,7 @@ func LastCommonBlock(ctx context.Context, left, right Client, offset uint64) (ui
 	if err != nil {
 		return 0, 0, err
 	}
-	highestCommonBlock := max(leftLatestBlock, rightLatestBlock)
+	highestCommonBlock := min(leftLatestBlock, rightLatestBlock)
 	log.Printf("highestCommonBlock = 0x%x (%d)", highestCommonBlock, highestCommonBlock)
 	highestCommonBlock -= offset
 	log.Printf("highestCommonBlock (safe value) = 0x%x (%d)", highestCommonBlock, highestCommonBlock)
@@ -104,8 +104,8 @@ func LastCommonBlock(ctx context.Context, left, right Client, offset uint64) (ui
 	return res - 1, highestCommonBlock, err
 }
 
-func max(x, y uint64) uint64 {
-	if x > y {
+func min(x, y uint64) uint64 {
+	if x < y {
 		return x
 	}
 	return y

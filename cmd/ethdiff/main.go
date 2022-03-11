@@ -61,7 +61,7 @@ func run() int {
 	}
 
 	fmt.Printf("0x%x\n", lastCommonBlock)
-	if (lastCommonBlock != observedHeight) {
+	if lastCommonBlock != observedHeight {
 		return 3
 	}
 
