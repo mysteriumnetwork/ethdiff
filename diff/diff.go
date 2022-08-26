@@ -87,6 +87,15 @@ func LastCommonBlock(ctx context.Context, left, right Client, offset uint64) (ui
 	highestCommonBlock -= offset
 	log.Printf("highestCommonBlock (safe value) = 0x%x (%d)", highestCommonBlock, highestCommonBlock)
 
+	// fast path
+	leftBlock, rightBlock, err := getBlocks(ctx, left, right, highestCommonBlock)
+	if err != nil {
+		return 0, 0, err
+	}
+	if leftBlock.Hash() == rightBlock.Hash() {
+		return highestCommonBlock, highestCommonBlock, nil
+	}
+
 	res, err := search(highestCommonBlock+1, func(blockNumber uint64) (bool, error) {
 
 		leftBlock, rightBlock, err := getBlocks(ctx, left, right, blockNumber)
